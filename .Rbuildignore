@@ -1,0 +1,8 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^ICE_Detention_Report\.Rmd$
+^ICE_Detention_Report\.html$
+^anRpackage$
+^ICE_Detention_Report_files$
+^data-raw$

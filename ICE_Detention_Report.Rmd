@@ -1,0 +1,322 @@
+---
+title: "ICE Detention Data Analysis Tools"
+author: "Badinter Schweitzer"
+date: "2026-11-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##  Constructing an R Package: Technical and Community Viewpoints
+
+In this project, I will describe the package at two distinct levels: a technical perspective and a perspective tailored to the R community. First, the technical perspective will focus on the package’s internal architecture; second, the R community perspective will emphasize usability, documentation, and integration with existing R workflows.
+
+## Load Packages
+
+```{r }
+library(devtools)
+library(usethis)
+library(roxygen2)
+library(testthat)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+```
+
+**Source:**https://usafacts.org/articles/what-is-ice-and-what-does-it-do/
+
+**ICE DETENTION**
+
+Undocumented immigrants in the United States encounter significant challenges, facing numerous obstacles today. As an immigrant myself, I find it hard to ignore data on arrests, detentions, and deportations, whether reported monthly or annually. Thus, I recognized the need to ascertain the annual number of immigrants detained overall between 2014 and 2025, and to identify the country with the highest detention rate. This goal directed my choice of the detention dataset for my final project. The project will deliver visual analysis and implement the recommendations in an installable R package that includes comprehensive documentation and necessary structures. Furthermore, this project benefits both me and others, informs policy debates, provides actionable insights to stakeholders, supports future research, enhances public understanding, guides decision-makers, and promotes informed discussion.
+
+## Read and Investigate the Data
+
+```{r }
+# Load ice detention dataset
+detention <- read_csv("data-raw/ice_detention.csv")
+
+head(detention)
+```
+
+## Inspect before renaming
+
+```{r}
+dim(detention)
+```
+**The detention dataset consists of 12 observations(rows) and 13 variables(columns).**
+
+```{r}
+names(detention)
+```
+
+```{r}
+glimpse(detention)
+```
+
+```{r}
+# View structure
+str(detention)
+```
+
+```{r}
+# Summarise(detention)
+summary(detention)
+```
+
+## Reshape the data
+
+```{r}
+library(tidyr)
+
+detention_long <- pivot_longer(
+  detention,
+  cols = Colombia:Ecuador,
+  names_to = "Country",
+  values_to = "Country Count"
+)
+```
+
+## Linear Regression of ICE Detentions by Fiscal Year
+
+```{r message=FALSE}
+ggplot(detention,
+       aes(x = `Fiscal Year`,
+           y = Total)) +
+  geom_point(
+      alpha = 0.8,
+      color = "cyan",
+      size = 3
+      ) +
+ geom_smooth(
+   method = "lm",
+   color = "red"
+   ) +
+  
+  labs(
+    title = "ICE Detentions by Fiscal Year",
+    x = "Fiscal Year",
+    y = "Total Detentions"
+  ) +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5, color = "blue")
+  )
+```
+
+**Analytical Approaches**
+
+The linear regression analysis indicates that the detention rate reached their highest level in 2019, suggesting a higher frequency of arrests during that year. This spike may be attributed to intensified law enforcement initiatives, changes in policy, or an increase in reported incidents. Over the subsequent years, the model shows a gradual decline in detention rates, reaching a lower level by 2025. The downward trend could reflect the effectiveness of reforms, improved community policing, or shifts in crime patterns.
+
+```{r}
+# Create a vector country names
+country_names <- c(
+  "Colombia", "India", "Venezuela",
+  "Nicaragua", "Guatemala", "Honduras",
+  "Mexico", "Dominican Republic",
+  "Other", "El Salvador", "Ecuador"
+)
+
+# Find Country Totals
+country_totals <- colSums(detention[, 3:13], na.rm = TRUE)
+
+```
+
+## Convert to a data frame for plotting
+
+```{r}
+# create a dataframe for country_detentions
+country_detentions <- data.frame(
+  Country = country_names,
+  Total = as.numeric(country_totals)
+  )
+```
+
+## Visualize total detention counts by country
+
+```{r message=FALSE}
+
+ggplot(country_detentions, 
+       aes(x = Country, 
+           y = Total,
+           colour = Country)) +
+  geom_point(size = 4)+
+  
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5, color = "brown1"),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(), 
+    axis.line = element_line(linewidth = 0.75),
+    axis.line.x.bottom = element_line(colour = "blue2"),
+   )+
+      labs(
+        title = "Total Detentions by Country",
+        x = "Country",
+        y = "Total Detentions"
+      ) 
+```
+
+**Concise Findings Statement**
+
+ The geom_point plot shows that Mexico, represented by the blue point, has the highest total number of detentions among the countries displayed. This pattern can be plausibly explained by Mexico’s proximity to the United States, which allows a larger volume of cross‑border movement and thus raises the likelihood of detentions. Ecuador, often referred to in the data as the “brown point", shows a markedly lower number of citizens detained by U.S. Immigration and Customs Enforcement (ICE).
+
+## Technical Communication 1
+
+The ICE detention dataset holds yearly detention figures, arranged by fiscal year and the detainee’s country of birth. This arrangement lets analysis look at temporal trends and compare how people from various regions are treated. Prior to any statistical work, the dataset was examined with the head() function to see the initial entries and with str() to verify data types and variable labels.
+
+## Test Generic Functions
+
+```{r}
+print(detention)
+
+summary(detention)
+
+plot(detention$`Fiscal Year`)
+```
+
+## Technical Communication 2
+
+The generic functions print(), summary(), and plot() were used on the detention dataset. They invoked class‑specific methods, enabling the data to be shown in a clear format, automatically calculating essential descriptive statistics, and visualizing it over fiscal years. This method mainly aims to simplify routine data exploration and offer a uniform interface for analysts handling various data structures.
+
+## Explore S3 vs. S4
+
+```{r}
+# Create an S3 object
+s3_detention <- list(
+  dataset = detention,
+  total_years = nrow(detention)
+)
+
+class(s3_detention) <- "detention_s3"
+
+```
+
+## Demonstrate S3 Method Dispatch
+
+```{r}
+# print S3 object
+print(s3_detention)
+```
+## Comparison of S3 and S4 Object
+
+```{r}
+# Create an S4 class and object
+setClass(
+  "detention_s4",
+  slots = c(
+    year = "numeric",
+    total = "numeric"
+  )
+)
+
+# Create an object
+s4_detention <- new(
+  "detention_s4",
+  year = 2024,
+  total = 372000
+)
+
+# Set method for S4
+setMethod(
+  "show",
+  "detention_s4",
+  function(object) {
+    cat("Fiscal Year:", object@year, "\n")
+    cat("Detentions:", object@total, "\n")
+  }
+)
+```
+
+## Demonstrate S4 Method Dispatch 
+
+```{r}
+# print S4 object
+print(s4_detention)
+```
+## Technical Communication 3
+
+To investigate R's object-oriented frameworks, I constructed both an S3 object and an S4 object derived from the ICE detention dataset. The S3 object employed an informal class assignment via class(), whereas the S4 object was formally specified with setClass(). I tested generic functions such as print() to illustrate method dispatch. The S4 approach offered a more robust structure through predefined slots and type validation.
+
+## Reproducibility checks
+
+**Defensive Programming in R**
+
+```{r}
+stopifnot(file.exists(file.path("data-raw", "ice_detention.csv")))
+stopifnot(all(complete.cases(detention)))
+stopifnot(nrow(detention) == 12)
+stopifnot(ncol(detention) == 13)
+stopifnot(all(
+  c("Fiscal Year", "Total", "Colombia", "India", "Venezuela")
+  %in% names(detention)
+))
+
+```
+ 
+## Benefit to the R community
+
+Because R packages are viewed as the best method for packaging and sharing R code and data for reuse by others, particularly students and novice R programmers, this package addresses several issues. It shows how to employ devtools to install a new package straight from a GitHub repository. It also assists users in dividing functions into separate packages and offers experience in crafting machine‑readable metadata.
+
+## AI-use disclosure
+
+I used AI to assist with writing and grammar. I verified the output by reviewing. I revised course material, and review the suggestion. I revised the typographical errors. I am responsible for the final code, analysis, and interpretation.
+
+## Submission checklist
+
+[X] Repository has DESCRIPTION, NAMESPACE, LICENSE, R/, man/, and README.md
+
+[X] DESCRIPTION lists you as author, plus a title, description, version, license, and all dependencies
+
+[X] Every exported function has roxygen documentation with @param, @return, and @examples
+
+[X] Optional: a vignette (long-form documentation). Not required, but encouraged
+
+[X] At least one S3 or S4 class with a method
+
+[X] devtools::check() returns 0 errors
+
+[X] A classmate can run devtools::install_github("yourname/yourpackage") and library(yourpackage) successfully
+
+[X] Blog post covers both the technical features and the benefit to the R community, and links to the GitHub repository
+
+[X] Commit history shows your work over time
+
+[X] README ends with an AI use statement (tools used or "none", what for, what you wrote yourself)
+
+[X] Canvas submission includes the GitHub link and the blog post link
+
+
+## Reproducibility information
+
+```{r}
+sessionInfo()
+```
+## Validation package
+
+**Must finish with 0 errors**
+
+```{r}
+#devtools::check()
+```
+
+**Prior to submission, the package undergoes a comprehensive suite of tests encompassing syntax verification, documentation validation, and integrity assessments via devtools::check(), which yields no errors, warnings, or notes.**
+
+
+── R CMD check results ──────────────────────────────────────────────────────────────────────────────────────────── finalprojects 0.1.0 ────
+Duration: 1m 41.7s
+
+0 errors ✔ | 0 warnings ✔ | 0 notes ✔
+
+
+
+
+
+
+
+
+
+
+
+

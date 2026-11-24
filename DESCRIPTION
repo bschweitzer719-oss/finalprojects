@@ -1,0 +1,26 @@
+Package: finalprojects
+Type: Package
+Title: ICE Detention Data Analysis Tools
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Badinter", "Schweitzer",
+      email = "bschweitzer@usf.edu",
+      role = c("aut", "cre")
+    )
+  )
+Description: More about what it does (maybe more than one line).
+    Continuation lines should be indented.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Suggests: 
+    ggplot2,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+Config/roxygen2/version: 8.1.1
+Depends: 
+    R (>= 3.5)
