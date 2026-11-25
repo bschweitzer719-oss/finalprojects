@@ -34,4 +34,6 @@ https://usafacts.org/articles/what-is-ice-and-what-does-it-do/
 # Html Project Link
 file:///C:/Users/User/OneDrive%20-%20University%20of%20South%20Florida/LIS4370/finalprojects/ICE_Detention_Report.html
 
+# The complete project is available on Wordpress.com
+https://discoverantilleancuisine.wordpress.com/2026/11/24/fall-2026-lis4370-final-project-ice-detention-data-analysis-tools/
 
